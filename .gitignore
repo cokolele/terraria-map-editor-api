@@ -1,0 +1,6 @@
+logs
+*.log
+logs/
+npm-debug.log*
+node_modules/
+secrets.js
