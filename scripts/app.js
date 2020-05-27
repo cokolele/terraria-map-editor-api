@@ -1,6 +1,4 @@
-const mysql = require("mysql");
-const express = require("express");
-const app = express();
+const app = require("express")();
 const session = require("express-session");
 const MySQLStore = require("express-mysql-session")(session);
 const bodyParser = require("body-parser");
@@ -8,6 +6,7 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const fs = require("fs");
 const path = require("path");
+const { validateDirectory } = require("../utils/utils.js");
 
 const routes = require("../routes/index.js");
 const createResponses = require("../responses.js");
@@ -24,52 +23,46 @@ const onDBReconnect = (_dbConnection) => {
 
 const create = (config, _dbConnection) => {
     app.set("config", config);
+    validateDirectory(config.contentDir);
 
     dbConnection = _dbConnection
+
+    //bodyParser setup
+    app.use(bodyParser.json({
+        type: "application/json"
+    }));
+
+    //morgan and helmet setup
+    if (app.get("config").env == "production") {
+        const logsDir = path.join(config.serverRootDir, "/logs");
+        validateDirectory(logsDir);
+        app.use(morgan("common", {
+            stream: fs.createWriteStream(path.join(logsDir, "/api-access.log"), { flags: "a" })
+        }));
+    }
+    app.use(helmet());
 
     //express session setup
     const sessionSettings = {
         cookie: {
             httpOnly: true,
             maxAge: 2592000000,
+            sameSite: "none"
         },
         name: "tweSessId",
-        store: new MySQLStore({}, dbConnection),
         secret: config.secrets.sessionSecret,
+        store: new MySQLStore({}, dbConnection),
         resave: false,
-        saveUninitialized: false,
-        rolling: true
+        rolling: true,
+        saveUninitialized: false
     }
     if (app.get("config").env == "production") {
         app.set("trust proxy", 1)
-        sessionSettings.cookie.secret = true;
+        sessionSettings.cookie.secure = true;
     }
-    app.use((req, res, next) => {
-        if (dbConnection !== null) {
-            session(sessionSettings);
-        }
-        next();
-    });
-
-    //bodyParser setup
-    app.use((req, res, next) => {
-        if (req.headers["content-type"] && (req.headers["content-type"].includes("application/octet-stream") || req.headers["content-type"].includes("multipart/form-data"))) {
-            app.use(bodyParser.urlencoded({ extended : true }));
-            app.use(bodyParser.json());
-        }
-        next();
-    });
-
-    //morgan and helmet setup
-    if (app.get("config").env == "production") {
-        const logsDir = path.join(config.serverRootDir, "/logs");
-        if (!fs.existsSync(logsDir))
-            fs.mkdirSync(logsDir);
-        app.use(morgan("common", {
-            stream: fs.createWriteStream(path.join(logsDir, "/api-access.log"), { flags: "a" })
-        }));
+    if (dbConnection !== null) {
+        app.use(session(sessionSettings))
     }
-    app.use(helmet());
 
     //routes
     app.use((req, res, next) => {

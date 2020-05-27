@@ -4,12 +4,12 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "rawstart": "cross-env NODE_ENV=development node server.js",
-    "api:start:dev": "pm2 start process.json --env development",
-    "api:start": "pm2 start process.json --env production",
-    "api:restart": "pm2 restart tme_api",
-    "api:stop": "pm2 delete tme_api",
-    "api:monitor": "pm2 monit tme_api"
+    "start": "cross-env NODE_ENV=development node server.js",
+    "api:start:dev": "cross-env NODE_ENV=development pm2 start configs/pm2.config.js --env development",
+    "api:start": "cross-env NODE_ENV=production pm2 start configs/pm2.config.js --env production",
+    "api:restart": "pm2 restart api",
+    "api:stop": "pm2 delete api",
+    "api:monitor": "pm2 monit api"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +19,7 @@
     "cross-env": "^7.0.2",
     "express": "^4.17.1",
     "express-mysql-session": "^2.1.4",
+    "express-session": "^1.17.1",
     "helmet": "^3.22.0",
     "isemail": "^3.2.0",
     "morgan": "^1.10.0",

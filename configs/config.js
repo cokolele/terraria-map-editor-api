@@ -28,6 +28,7 @@ const profiles = {
 module.exports = {
     ...profiles[env],
     port: 3000,
+    contentDir: path.join(serverRootDir, "/content"),
     env,
     serverRootDir,
     secrets
