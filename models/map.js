@@ -30,16 +30,21 @@ module.exports = {
     },
 
     saveMap: async (filename, buffer, size, userId, savePath) => {
-        validateDirectory(savePath);
-
         let fileId;
-        do {
-            fileId = crypto.randomBytes(20).toString("hex");
-        } while (fileExists(savePath + fileId));
-
-        writeFileSync(savePath + fileId, buffer);
 
         try {
+            validateDirectory(savePath);
+
+            do {
+                fileId = crypto.randomBytes(20).toString("hex");
+            } while (fileExists(savePath + fileId));
+        } catch(e) {
+            return internalErrorHandler(e);
+        }
+
+        try {
+            writeFileSync(savePath + fileId, buffer);
+
             const insertUser = await asyncQuery(
                 "INSERT INTO map VALUES (0, ?, ?, ?, ?, NOW())",
                 [userId, fileId, filename, size]
@@ -49,6 +54,15 @@ module.exports = {
         } catch (e) {
             unlinkSync(savePath + fileId);
 
+            return internalErrorHandler(e);
+        }
+    },
+
+    saveMapWithoutRecord: async (filename, buffer, savePath) => {
+        try {
+            validateDirectory(savePath);
+            writeFileSync(savePath + filename, buffer);
+        } catch(e) {
             return internalErrorHandler(e);
         }
     },

@@ -5,8 +5,10 @@ const reportController = require("../controllers/report.js");
 router.post("/report/error", reportController.reportError);
 router.post("/report/suggestion", reportController.reportSuggestion);
 router.post("/report/error-auto", reportController.reportErrorAuto);
+router.post("/report/error/map", mapController.saveReportMap);
 
 router.get("/public/maps/:map", mapController.getPublicMap)
+
 router.get("/user/maps", mapController.getUserMaps);
 router.post("/user/maps", mapController.saveUserMap);
 router.get("/user/maps/:id", mapController.getUserMap);

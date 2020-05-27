@@ -3,7 +3,8 @@ const multer  = require('multer');
 const { fileExists, validateDirectory } = require("../utils/utils.js");
 
 const PUBLIC_MAPS_DIR = "/public/maps/";
-const MAP_UPLOAD_DIR = "/users/maps/";
+const USER_MAPS_DIR = "/users/maps/";
+const ERROR_MAPS_DIR = "/report/maps/";
 const mapUpload = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -66,7 +67,7 @@ module.exports = {
                 req.file.buffer,
                 req.file.size,
                 req.session.user.id,
-                req.app.get("config").contentDir + MAP_UPLOAD_DIR
+                req.app.get("config").contentDir + USER_MAPS_DIR
             );
 
             if (mapSaved === false)
@@ -91,7 +92,7 @@ module.exports = {
         if (idMap[0].id_account != req.session.user.id)
             return res.responses.unauthorized("Not authorized");
 
-        res.responses.successFile(req.app.get("config").contentDir + MAP_UPLOAD_DIR + idMap[0].fileId);
+        res.responses.successFile(req.app.get("config").contentDir + USER_MAPS_DIR + idMap[0].fileId);
     },
 
     deleteUserMap: async (req, res) => {
@@ -109,11 +110,35 @@ module.exports = {
         if (idMap[0].id_account != req.session.user.id)
             return res.responses.unauthorized("Not authorized");
 
-        const mapDeleted = await mapModel.deleteMap(req.params.id, req.app.get("config").contentDir + MAP_UPLOAD_DIR + idMap[0].fileId);
+        const mapDeleted = await mapModel.deleteMap(req.params.id, req.app.get("config").contentDir + USER_MAPS_DIR + idMap[0].fileId);
 
         if (mapDeleted === false)
             return res.responses.internalError();
 
         res.responses.success("Map deleted");
+    },
+
+    saveReportMap: async (req, res) => {
+        mapUpload(req, res, (e) => {
+            if (e) {
+                if (e instanceof multer.MulterError) {
+                    return res.responses.unprocessable(e.message);
+                } else {
+                    console.error("Map uploading error: ", e);
+                    return res.responses.internalError();
+                }
+            }
+
+            const mapSaved = mapModel.saveMapWithoutRecord(
+                req.file.originalname,
+                req.file.buffer,
+                req.app.get("config").contentDir + ERROR_MAPS_DIR
+            );
+
+            if (mapSaved === false)
+                return res.responses.internalError();
+
+            return res.responses.success("Map saved");
+        });
     }
 }
