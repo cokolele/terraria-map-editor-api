@@ -44,5 +44,3 @@ CREATE TABLE map (
     PRIMARY KEY (id),
     FOREIGN KEY (id_account) REFERENCES account(id)
 ) ENGINE = InnoDB CHARSET=utf8;
-
-CREATE VIEW view_account_complete AS SELECT * FROM account;
