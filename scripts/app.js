@@ -25,7 +25,7 @@ const create = (config, _dbConnection) => {
     app.set("config", config);
     validateDirectory(config.contentDir);
 
-    dbConnection = _dbConnection
+    dbConnection = _dbConnection;
 
     //bodyParser setup
     app.use(bodyParser.json({
@@ -51,7 +51,7 @@ const create = (config, _dbConnection) => {
         },
         name: "tweSessId",
         secret: config.secrets.sessionSecret,
-        store: new MySQLStore({}, dbConnection),
+        store: null,
         resave: false,
         rolling: true,
         saveUninitialized: false
@@ -60,18 +60,27 @@ const create = (config, _dbConnection) => {
         app.set("trust proxy", 1)
         sessionSettings.cookie.secure = true;
     }
-    if (dbConnection !== null) {
-        app.use(session(sessionSettings))
-    }
+    app.use((req, res, next) => {
+        if (dbConnection) {
+            if (!sessionSettings.store)
+                sessionSettings.store = new MySQLStore({}, dbConnection);
+            session(sessionSettings)(req, res, next);
+        } else {
+            sessionSettings.store = null;
+            next();
+        }
+    });
 
     //routes
     app.use((req, res, next) => {
         res.responses = createResponses(res);
 
-        if (dbConnection === null)
+        if (!dbConnection) {
             res.responses.serviceUnavailable("Couldn't connect to database. Please try again later");
-
-        next();
+            res.end();
+        } else {
+            next();
+        }
     })
     app.use(routes);
 };

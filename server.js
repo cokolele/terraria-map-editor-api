@@ -2,29 +2,29 @@ const config = require("./configs/config.js");
 const db = require("./scripts/db.js");
 const app = require("./scripts/app.js");
 
+function log(...msg) {
+    const time = new Date();
+    console.log(`${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}`, ...msg);
+}
+
+function error(...msg) {
+    const time = new Date();
+    console.error(`${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}`, ...msg);
+}
+
 (async function() {
-    function log(...msg) {
-        const time = new Date();
-        console.log(`${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}`, ...msg);
-    }
-
-    function error(...msg) {
-        const time = new Date();
-        console.error(`${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}`, ...msg);
-    }
-
     log("TME_API: Starting the API server...");
 
     let dbConnection = null;
 
     const onDBDisconnect = (e) => {
-        error("TME_API: Couldn't connect to database:: ", e);
+        error("TME_API: Couldn't connect to database: ", e);
         app.onDBDisconnect();
     }
 
-    const onDBReconnect = (_dbConnection) => {
-        log("TME_API: Connection to database restored...")
-        app.onDBReconnect();
+    const onDBReconnect = (dbConnection) => {
+        log("TME_API: Connection to database restored...");
+        app.onDBReconnect(dbConnection);
     }
 
     dbConnection = await db.create(config, onDBDisconnect, onDBReconnect);
@@ -42,5 +42,4 @@ const app = require("./scripts/app.js");
     } catch(e) {
         error("TME_API: Fatal app error:", e);
     }
-
 })();
