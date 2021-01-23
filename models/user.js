@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const { asyncQuery } = require("../scripts/db.js");
 
-const usernameRegexp = /^[a-z0-9_-]{3,16}$/;
+const usernameRegexp = /^[A-Za-z0-9_-]{3,16}$/;
 
 const internalErrorHandler = (e) => {
     console.error(e);
