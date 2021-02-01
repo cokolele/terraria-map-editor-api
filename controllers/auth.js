@@ -28,7 +28,7 @@ module.exports = {
             return res.responses.internal_error();
 
         if (userSameCredentials.error)
-            res.responses.unprocessable(userSameCredentials.error);
+            return res.responses.unprocessable(userSameCredentials.error);
 
         req.session.user = userSameCredentials[0];
         req.session.loggedIn = true;
